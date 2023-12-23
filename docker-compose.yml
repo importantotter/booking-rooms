@@ -1,0 +1,32 @@
+version: '3.1'
+
+services:
+  db:
+    container_name: some-postgres
+    image: postgres
+    restart: always
+    ports:
+      - 5430:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: booking_rooms
+  app:
+    container_name: booking_rooms
+    image: booking_rooms
+    build: .
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/booking_rooms
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+    ports:
+      - 8080:8080
+  flyway:
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://db/booking_rooms -schemas=public -user=postgres -password=root -connectRetries=60 migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql
+    depends_on:
+      - app
